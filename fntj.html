@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>飞鸟特价 - 特价机票发现平台</title>
+    <style>
+        /* ================= 基础变量与重置 ================= */
+        :root {
+            --primary: #0f3460;
+            --primary-light: #1a4b8c;
+            --accent: #f97316;
+            --accent-hover: #ea580c;
+            --bg-color: #f3f4f6;
+            --surface: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; padding-top: 60px; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; }
+        button { cursor: pointer; border: none; outline: none; font-family: inherit; transition: var(--transition); }
+        input, select { border: 1px solid var(--border); border-radius: 4px; padding: 8px 12px; outline: none; transition: border-color 0.2s; font-size: 16px !important; min-height: 44px; }
+        input:focus, select:focus { border-color: var(--primary); }
+
+        /* ================= 布局组件 ================= */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; }
+        .flex { display: flex; }
+        .flex-col { display: flex; flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-4 { gap: 1rem; }
+        .gap-2 { gap: 0.5rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+
+        /* ================= 导航栏 ================= */
+        header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--primary); color: white; z-index: 1000; box-shadow: var(--shadow); }
+        .nav-container { height: 100%; display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .nav-links { display: flex; gap: 24px; }
+        .nav-links a { opacity: 0.8; transition: var(--transition); font-weight: 500; }
+        .nav-links a:hover, .nav-links a.active { opacity: 1; border-bottom: 2px solid var(--accent); }
+
+        /* ================= 通用 UI 元素 ================= */
+        .btn { padding: 10px 20px; border-radius: var(--radius); font-weight: bold; text-align: center; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: white; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-right: 8px; }
+        .tag-danger { background: #fee2e2; color: var(--danger); }
+        .tag-success { background: #d1fae5; color: var(--success); }
+        .tag-info { background: #e0e7ff; color: var(--primary); }
+        .tag-disabled { background: #f3f4f6; color: #9ca3af; border: 1px solid #e5e7eb; }
+        .tag-warning { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+        .price { color: var(--accent); font-size: 24px; font-weight: bold; }
+        .price::before { content: '¥'; font-size: 16px; margin-right: 2px; }
+
+        /* ================= 页面特定样式 ================= */
+        .hero { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; padding: 60px 0; text-align: center; }
+        .search-box { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 30px; border-radius: var(--radius); margin-top: 30px; border: 1px solid rgba(255,255,255,0.2); }
+        .search-form { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 15px; align-items: end; text-align: left;}
+        .form-group { position: relative; }
+        .form-group label { display: block; font-size: 14px; margin-bottom: 5px; opacity: 0.9; }
+        
+        /* 城市面板与动效 */
+        .city-panel { position: absolute; top: 100%; left: 0; width: 100%; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); z-index: 100; margin-top: 5px; padding: 15px; display: none; border: 1px solid var(--border); color: var(--text-main); text-align: left;}
+        .city-panel.show { display: block; }
+        .city-tag { display: inline-block; padding: 6px 12px; background: var(--bg-color); margin: 4px; border-radius: 4px; cursor: pointer; font-size: 14px; transition: var(--transition); }
+        .city-tag:hover { background: var(--primary-light); color: white; }
+        .city-group-title { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; margin-top: 8px; display: block; }
+
+        @keyframes pulse-border { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        @keyframes shine { 0% { transform: translateX(-100%) rotate(30deg); } 100% { transform: translateX(100%) rotate(30deg); } }
+        .flash-sale-card { border: 1px solid #fee2e2; animation: pulse-border 2s infinite; position: relative; overflow: hidden; }
+        .flash-sale-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%); transform: rotate(30deg); animation: shine 3s infinite; pointer-events: none; }
+        .countdown-box { background: rgba(239, 68, 68, 0.1); color: var(--danger); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; font-family: monospace; }
+
+        /* 弹窗与交互反馈 */
+        .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 30px; z-index: 9999; opacity: 0; pointer-events: none; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 14px; text-align: center; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
+        .modal-overlay.show { display: flex; opacity: 1; }
+        .modal-content { background: white; padding: 30px; border-radius: var(--radius); max-width: 400px; width: 90%; text-align: center; transform: translateY(-20px); transition: transform 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-overlay.show .modal-content { transform: translateY(0); }
+
+        /* 列表页与详情页核心样式 */
+        .results-layout { display: grid; grid-template-columns: 250px 1fr; gap: 30px; margin-top: 30px; }
+        .filter-panel { position: sticky; top: 80px; }
+        .filter-group { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .filter-group h4 { margin-bottom: 10px; font-size: 16px; }
+        .filter-group label { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; color: var(--text-muted); }
+        .flight-card { display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s; cursor: pointer; }
+        .flight-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+        .flight-time { font-size: 20px; font-weight: bold; }
+        .flight-airport { color: var(--text-muted); font-size: 14px; }
+        .flight-duration { text-align: center; color: var(--text-muted); font-size: 12px; position: relative; padding: 0 20px; }
+        .flight-duration::after { content: ''; position: absolute; top: 50%; left: 0; right: 0; border-top: 1px dashed #ccc; z-index: 1; }
+        .flight-duration span { background: var(--surface); position: relative; z-index: 2; padding: 0 5px; }
+
+        /* AI 规则解读区样式 */
+        .rule-section { margin-bottom: 20px; }
+        .rule-section:last-child { margin-bottom: 0; }
+        .rule-title { font-weight: bold; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .risk-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .risk-high { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; animation: pulse-border 2s infinite; }
+        .risk-medium { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+        .risk-low { background: #d1fae5; color: #047857; border: 1px solid #6ee7b7; }
+        .rule-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; background: white; margin-bottom: 10px; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .rule-table th, .rule-table td { border: 1px solid var(--border); padding: 10px 5px; }
+        .rule-table th { background: #f1f5f9; color: var(--text-muted); font-weight: 500; }
+        .rule-table td.fee-high { color: var(--danger); font-weight: bold; }
+        .rule-table td.fee-low { color: var(--success); font-weight: bold; }
+        .comparison-box { background: white; padding: 15px; border-radius: var(--radius); border: 1px solid var(--border); margin-top: 10px;}
+        .flex-bar { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; flex: 1; margin: 0 10px; position: relative; }
+        .flex-fill { height: 100%; position: absolute; left: 0; top: 0; border-radius: 4px; transition: width 0.5s ease; }
+        .price-compare { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border); }
+        .price-compare:last-child { border-bottom: none; }
+        #priceChart { width: 100%; height: 250px; background: #fafafa; border: 1px solid var(--border); border-radius: var(--radius); margin-top: 20px; }
+
+        .sub-list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border); }
+        details { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 15px; overflow: hidden; }
+        summary { padding: 15px 20px; font-weight: bold; cursor: pointer; background: #f8fafc; outline: none; }
+        .details-content { padding: 20px; border-top: 1px solid var(--border); line-height: 1.6; color: var(--text-muted); }
+        footer { background: #111827; color: #9ca3af; padding: 40px 0 20px; text-align: center; margin-top: 60px; font-size: 14px; }
+
+        /* ================= 移动端适配专属样式 ================= */
+        .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; height: 60px; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid var(--border); }
+        .bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-muted); flex: 1; height: 100%; text-decoration: none; transition: color 0.2s; }
+        .bottom-nav a svg { width: 22px; height: 22px; margin-bottom: 4px; stroke-width: 2; }
+        .bottom-nav a.active { color: var(--primary); font-weight: bold; }
+
+        @media (max-width: 900px) {
+            .results-layout { grid-template-columns: 1fr; }
+            .filter-panel { display: flex; overflow-x: auto; white-space: nowrap; padding-bottom: 10px; position: sticky; top: 60px; z-index: 90; margin-bottom: 10px; -webkit-overflow-scrolling: touch; }
+            .filter-group { flex: 0 0 auto; margin-right: 15px; border-bottom: none; padding-bottom: 0; margin-bottom: 0; border-right: 1px solid var(--border); padding-right: 15px; }
+            .filter-group:last-child { border-right: none; }
+            .filter-group h4 { display: inline-block; margin-right: 10px; margin-bottom: 0; }
+            .filter-group label { display: inline-flex; margin-bottom: 0; }
+        }
+        
+        @media (max-width: 768px) {
+            body { padding-bottom: 70px; }
+            header { height: 50px; }
+            .nav-container { padding: 0 15px; justify-content: center; }
+            .nav-links { display: none !important; }
+            .bottom-nav { display: flex; }
+            .hero { padding: 20px 0; }
+            .search-box { padding: 15px; margin-top: 15px; border-radius: 12px; }
+            .search-form { grid-template-columns: 1fr; gap: 12px; }
+            .form-group label { font-size: 13px; margin-bottom: 6px; }
+            .flight-card { flex-direction: column; align-items: stretch; gap: 12px; padding: 15px; }
+            .flight-card > div:first-child { width: 100%; }
+            .flight-card .flex.items-center.gap-4 { justify-content: space-between; margin-top: 10px; }
+            .flight-time { font-size: 26px; color: var(--primary); }
+            .flight-duration { padding: 0 10px; }
+            .flight-card .action-area { flex-direction: row; justify-content: space-between; align-items: center; border-left: none; border-top: 1px dashed var(--border); padding-left: 0; padding-top: 15px; width: 100%; margin-top: 5px; }
+            .action-area .price { font-size: 28px; }
+            .action-area button { width: auto; padding: 0 20px; min-width: 100px; }
+            .rule-table { display: block; overflow-x: auto; white-space: nowrap; width: 100%; -webkit-overflow-scrolling: touch; border-radius: 6px; }
+            .rule-table th, .rule-table td { padding: 12px 10px; }
+            .price-compare { flex-direction: column; gap: 5px; }
+            .price-compare span:last-child { align-self: flex-end; }
+            #priceChart { height: 200px; }
+            .flex.gap-4 { flex-direction: column; }
+            .comparison-box .flex.items-center { flex-wrap: wrap; }
+            .flex-bar { min-width: 150px; flex: unset; width: 100%; margin: 8px 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="#/" class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.2-1.1.7l-1.2 3.6c-.1.4.1.9.5 1.1L10 14l-4 4-2.5-.5c-.4-.1-.8.2-1 .6l-.5 1.5c-.1.4.1.9.5 1.1l5.5 1.5 1.5 5.5c.2.4.7.6 1.1.5l1.5-.5c.4-.2.7-.6.6-1l-.5-2.5 4-4 2.4 7c.2.4.7.6 1.1.5l3.6-1.2c.5-.2.8-.6.7-1.1z"></path></svg>
+                飞鸟特价
+            </a>
+            <nav class="nav-links" id="nav-links">
+                <a href="#/" class="nav-item">首页</a>
+                <a href="#/results" class="nav-item">特价机票池</a>
+                <a href="#/alerts" class="nav-item">降价订阅</a>
+                <a href="#/help" class="nav-item">帮助中心</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="app"></main>
+
+    <nav class="bottom-nav" id="bottom-nav">
+        <a href="#/" class="bottom-nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span>首页</span>
+        </a>
+        <a href="#/results" class="bottom-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span>特价池</span>
+        </a>
+        <a href="#/alerts" class="bottom-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <span>降价监控</span>
+        </a>
+        <a href="#/help" class="bottom-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <span>避坑指南</span>
+        </a>
+    </nav>
+
+    <footer>
+        <div class="container">
+            <p style="color: #fff; margin-bottom: 10px; font-weight: bold;">飞鸟特价 - 致力于让出行更简单</p>
+            <div style="font-size: 12px; opacity: 0.8; line-height: 1.8;">
+                <p><strong>郑重声明与合规说明：</strong></p>
+                <p>1. 本项目仅作为前端技术能力展示与测评演示工具，不投入任何商业化运营。</p>
+                <p>2. 平台内呈现的所有航班列表、动态价格、退改规则及其他业务数据，均为前端 JavaScript 代码随机生成的本地 Mock（虚拟）数据，不关联任何真实航司系统，绝不构成任何实际的购票建议与指导。</p>
+                <p>3. 本系统不包含真实支付接口与机票预订功能。点击购买仅作交互演示，请务必以各大型 OTA 平台或航空公司官方渠道公布的真实数据为准。</p>
+            </div>
+            <p style="margin-top: 15px; font-size: 12px;">&copy; 2024 飞鸟特价技术演示系统. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="toast" class="toast"></div>
+
+    <div id="sub_modal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="font-size: 40px; margin-bottom: 10px;">🎉</div>
+            <h3 style="margin-bottom: 15px; color: var(--text-main);">订阅生效！</h3>
+            <p style="color: var(--text-muted); font-size: 14px; text-align: left; line-height: 1.6; background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <b style="color: var(--text-main);">触发规则说明：</b><br>
+                1. 系统将自动每小时比对一次全网最新票价。<br>
+                2. 当价格 <b style="color: var(--danger);">低于您的预期价位</b> 时，立即发送短信通知。<br>
+                3. 每条航线每日最多触发 1 次提醒，防打扰。
+            </p>
+            <button class="btn btn-primary" style="width: 100%;" onclick="closeSubModal()">我知道了，查看订阅列表</button>
+        </div>
+    </div>
+
+    <script>
+        /* ================= 1. 数据 Mock 与存储安全封装 ================= */
+        const safeStorageGet = (key, defaultVal) => {
+            try { const data = localStorage.getItem(key); return data ? JSON.parse(data) : defaultVal; } 
+            catch(e) { console.warn('Storage parsing error', e); return defaultVal; }
+        };
+
+        const safeStorageSet = (key, val) => {
+            try { localStorage.setItem(key, JSON.stringify(val)); } 
+            catch(e) { console.warn('Storage save error', e); }
+        };
+
+        const airlines = [
+            { code: 'CZ', name: '南方航空', type: '全服务' },
+            { code: 'MU', name: '东方航空', type: '全服务' },
+            { code: '9C', name: '春秋航空', type: '廉航' },
+            { code: 'HO', name: '吉祥航空', type: '全服务' },
+            { code: 'KN', name: '中国联航', type: '廉航' }
+        ];
+        const cities = ['北京', '上海', '广州', '深圳', '成都', '重庆', '西安', '三亚', '曼谷', '东京'];
+        
+        const cityData = [
+            { name: '北京', pinyin: 'bj' }, { name: '上海', pinyin: 'sh' }, { name: '广州', pinyin: 'gz' },
+            { name: '深圳', pinyin: 'sz' }, { name: '成都', pinyin: 'cd' }, { name: '重庆', pinyin: 'cq' },
+            { name: '西安', pinyin: 'xa' }, { name: '杭州', pinyin: 'hz' }, { name: '南京', pinyin: 'nj' },
+            { name: '三亚', pinyin: 'sy' }, { name: '曼谷', pinyin: 'mg' }, { name: '东京', pinyin: 'dj' }
+        ];
+
+        const generateMockFlights = (count) => {
+            const flights = [];
+            for (let i = 0; i < count; i++) {
+                const airline = airlines[Math.floor(Math.random() * airlines.length)];
+                const from = cities[Math.floor(Math.random() * cities.length)];
+                let to = cities[Math.floor(Math.random() * cities.length)];
+                while (from === to) to = cities[Math.floor(Math.random() * cities.length)];
+                
+                const isDirect = Math.random() > 0.3;
+                const basePrice = Math.floor(Math.random() * 1500) + 200;
+                
+                flights.push({
+                    id: 'FL' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+                    airline: airline.name,
+                    airlineType: airline.type,
+                    flightNo: airline.code + Math.floor(Math.random() * 8000 + 1000),
+                    fromCity: from,
+                    fromAirport: from + (Math.random() > 0.5 ? '国际机场' : '第二机场'),
+                    fromTime: `${String(Math.floor(Math.random() * 16) + 6).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
+                    toCity: to,
+                    toAirport: to + '国际机场',
+                    toTime: `${String(Math.floor(Math.random() * 23)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
+                    duration: `${Math.floor(Math.random() * 3) + 2}h ${Math.floor(Math.random() * 60)}m`,
+                    stops: isDirect ? 0 : 1,
+                    price: basePrice,
+                    hasBaggage: airline.type === '全服务' ? true : Math.random() > 0.5,
+                    tags: airline.type === '廉航' ? ['无免费托运', '退改手续费高'] : ['含20kg托运', '支持退改'],
+                    score: Math.floor(Math.random() * 30 + 70)
+                });
+            }
+            return flights;
+        };
+
+        const mockFlights = generateMockFlights(50);
+        const promoFlights = mockFlights.slice(0, 3);
+        promoFlights[0].tags.push('今日秒杀');
+        window.currentResults = mockFlights;
+
+        /* ================= 2. 路由系统 (Hash Router) ================= */
+        const appDiv = document.getElementById('app');
+
+        const router = () => {
+            const hash = window.location.hash || '#/';
+            const url = new URL(hash.replace('#', 'http://localhost'), 'http://localhost');
+            const path = url.pathname;
+            const params = Object.fromEntries(url.searchParams);
+
+            document.querySelectorAll('.nav-item, .bottom-nav-item').forEach(el => {
+                el.classList.remove('active');
+                if (el.getAttribute('href') === '#' + path) el.classList.add('active');
+            });
+
+            if (path === '/') renderHome();
+            else if (path === '/results') renderResults(params);
+            else if (path.startsWith('/details/')) renderDetails(path.split('/')[2]);
+            else if (path === '/alerts') renderAlerts();
+            else if (path === '/help') renderHelp();
+            else renderHome();
+
+            window.scrollTo(0, 0);
+        };
+
+        window.addEventListener('hashchange', router);
+        window.addEventListener('DOMContentLoaded', router);
+
+        /* ================= 3. 全局辅助函数 ================= */
+        const showToast = (msg) => {
+            const toast = document.getElementById('toast');
+            if(!toast) return;
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        };
+
+        window.selectCity = (inputId, cityName) => {
+            const el = document.getElementById(inputId);
+            if(el) {
+                el.value = cityName;
+                document.getElementById(`panel_${inputId}`).classList.remove('show');
+                el.dispatchEvent(new Event('input'));
+            }
+        };
+
+        window.filterCities = (inputId, val) => {
+            const term = val.toLowerCase().trim();
+            const filtered = cityData.filter(c => c.name.includes(term) || c.pinyin.includes(term));
+            const tagsDiv = document.getElementById(`tags_${inputId}`);
+            if(!tagsDiv) return;
+            if(filtered.length === 0) {
+                tagsDiv.innerHTML = '<span style="font-size:12px; color:var(--text-muted);">暂无匹配城市</span>';
+            } else {
+                tagsDiv.innerHTML = filtered.slice(0, 10).map(c => `<span class="city-tag" onclick="selectCity('${inputId}', '${c.name}')">${c.name}</span>`).join('');
+            }
+        };
+
+        const renderCityPanel = (inputId) => `
+            <div class="city-panel" id="panel_${inputId}">
+                <span class="city-group-title">热门城市 (支持拼音如: bj)</span>
+                <div id="tags_${inputId}">
+                    ${cityData.slice(0,8).map(c => `<span class="city-tag" onclick="selectCity('${inputId}', '${c.name}')">${c.name}</span>`).join('')}
+                </div>
+            </div>
+        `;
+
+        const handleSearch = (e) => {
+            e.preventDefault();
+            const from = document.getElementById('from').value.trim();
+            const to = document.getElementById('to').value.trim();
+            const date = document.getElementById('flight_date').value;
+            
+            if(!from || !to) { showToast('请输入出发地和目的地'); return; }
+            if(from === to) { showToast('出发地与目的地不能相同'); return; }
+            
+            const today = new Date().toISOString().split('T')[0];
+            if(date < today) { showToast('无法选择过去的日期'); return; }
+            
+            window.location.hash = `/results?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+        };
+
+        /* ================= 4. 页面渲染模块 ================= */
+        let countdownTimer = null;
+
+        function renderHome() {
+            let html = `
+                <section class="hero">
+                    <div class="container">
+                        <h1 style="font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 10px;">发现全网隐藏特价</h1>
+                        <p style="font-size: 1.1rem; opacity: 0.9;">AI智能比价，规则解读避坑，帮你买对不买贵</p>
+                        
+                        <div class="search-box">
+                            <div style="margin-bottom: 15px; text-align: left;">
+                                <label style="margin-right: 15px;"><input type="radio" name="trip" checked> 单程</label>
+                                <label style="opacity: 0.5; cursor: not-allowed;" title="演示版本仅开放单程"><input type="radio" name="trip" disabled> 往返</label>
+                            </div>
+                            <form class="search-form" onsubmit="handleSearch(event)">
+                                <div class="form-group">
+                                    <label>出发地</label>
+                                    <input type="text" id="from" placeholder="如: 北京 或 bj" required autocomplete="off" onfocus="document.getElementById('panel_from').classList.add('show')" oninput="filterCities('from', this.value)" onblur="setTimeout(()=>document.getElementById('panel_from').classList.remove('show'), 200)">
+                                    ${renderCityPanel('from')}
+                                </div>
+                                <div class="form-group">
+                                    <label>目的地</label>
+                                    <input type="text" id="to" placeholder="如: 三亚 或 sy" required autocomplete="off" onfocus="document.getElementById('panel_to').classList.add('show')" oninput="filterCities('to', this.value)" onblur="setTimeout(()=>document.getElementById('panel_to').classList.remove('show'), 200)">
+                                    ${renderCityPanel('to')}
+                                </div>
+                                <div class="form-group">
+                                    <label>出发日期</label>
+                                    <input type="date" id="flight_date" required value="${new Date().toISOString().split('T')[0]}">
+                                </div>
+                                <div class="form-group">
+                                    <label>舱位</label>
+                                    <select>
+                                        <option>经济舱</option>
+                                        <option>商务舱</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-primary" style="width: 100%;">立刻搜索特价</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+                <div id="home_lazy_content"></div>
+            `;
+            appDiv.innerHTML = html;
+
+            if(countdownTimer) clearInterval(countdownTimer);
+            setTimeout(renderHomeLazyContent, 50);
+        }
+
+        function renderHomeLazyContent() {
+            const lazyContainer = document.getElementById('home_lazy_content');
+            if(!lazyContainer) return;
+
+            let html = `
+                <section class="container" style="margin-top: 40px;">
+                    <h2 style="margin-bottom: 20px; border-left: 4px solid var(--accent); padding-left: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        今日限时秒杀
+                        <span class="countdown-box" id="global_countdown">距结束 02:45:30</span>
+                    </h2>
+                    <div class="grid-3">
+                        ${promoFlights.map((f, index) => `
+                            <div class="card ${index === 0 ? 'flash-sale-card' : ''}">
+                                <div class="flex justify-between items-center" style="margin-bottom: 15px;">
+                                    <span class="tag tag-danger">${index === 0 ? '🔥 震撼秒杀' : '直降推荐'}</span>
+                                    <span style="color: var(--text-muted); font-size: 12px;">仅剩 ${Math.floor(Math.random() * 5) + 1} 张</span>
+                                </div>
+                                <h3>${f.fromCity} ➔ ${f.toCity}</h3>
+                                <p style="color: var(--text-muted); font-size: 14px; margin: 5px 0;">${f.airline} | ${f.fromTime} 起飞</p>
+                                <div class="flex justify-between items-center" style="margin-top: 15px;">
+                                    <span class="price">${f.price}</span>
+                                    <a href="#/details/${f.id}" class="btn btn-outline" style="padding: 5px 15px;">抢票</a>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </section>
+            `;
+            lazyContainer.innerHTML = html;
+
+            let secondsLeft = 2 * 3600 + 45 * 60 + 30;
+            countdownTimer = setInterval(() => {
+                secondsLeft--;
+                if(secondsLeft < 0) secondsLeft = 24 * 3600;
+                const h = String(Math.floor(secondsLeft / 3600)).padStart(2, '0');
+                const m = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0');
+                const s = String(secondsLeft % 60).padStart(2, '0');
+                const el = document.getElementById('global_countdown');
+                if(el) el.innerText = `距结束 ${h}:${m}:${s}`;
+            }, 1000);
+        }
+
+        function renderResults(params) {
+            const fromQuery = params.from || '';
+            const toQuery = params.to || '';
+            
+            let results = mockFlights;
+            if (fromQuery) results = results.filter(f => f.fromCity.includes(fromQuery));
+            if (toQuery) results = results.filter(f => f.toCity.includes(toQuery));
+            if (results.length === 0) results = mockFlights.slice(0, 5);
+            window.currentResults = results;
+
+            let html = `
+                <div style="background: white; padding: 15px 0; border-bottom: 1px solid var(--border);">
+                    <div class="container flex justify-between items-center">
+                        <div>
+                            <h2 style="margin-bottom: 5px; font-size: 1.2rem;">${fromQuery || '任意'} ➔ ${toQuery || '任意'}</h2>
+                            <p style="color: var(--text-muted); font-size: 14px;">共为您找到 <span id="resultCount" style="color: var(--accent); font-weight:bold;">${results.length}</span> 个特价航班</p>
+                        </div>
+                        <a href="#/" class="btn btn-outline" style="min-height:36px; padding: 5px 15px;">修改</a>
+                    </div>
+                </div>
+
+                <div class="container results-layout">
+                    <aside class="filter-panel card">
+                        <div class="filter-group">
+                            <h4>排序方式</h4>
+                            <select id="sortSelect" onchange="applyFilters()" style="width: 100%;">
+                                <option value="price_asc">价格从低到高</option>
+                                <option value="score_desc">性价比优先</option>
+                                <option value="time_asc">起飞时间从早到晚</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <h4>航司类型</h4>
+                            <label><input type="checkbox" class="filter-cb" data-key="airlineType" value="全服务"> 全服务航司 (含行李)</label>
+                            <label><input type="checkbox" class="filter-cb" data-key="airlineType" value="廉航"> 低成本航司</label>
+                        </div>
+                        <div class="filter-group">
+                            <h4>经停/中转</h4>
+                            <label><input type="checkbox" class="filter-cb" data-key="stops" value="0"> 仅看直飞</label>
+                        </div>
+                        <div class="filter-group" style="border: none;">
+                            <h4>价格区间 (最高)</h4>
+                            <input type="range" id="priceRange" min="200" max="2000" value="2000" style="width: 100%;" oninput="document.getElementById('priceVal').innerText=this.value; applyFilters()">
+                            <div class="flex justify-between" style="font-size: 12px; color: var(--text-muted);">
+                                <span>¥200</span>
+                                <span>¥<span id="priceVal">2000</span></span>
+                            </div>
+                        </div>
+                    </aside>
+                    <div id="flightList"></div>
+                </div>
+            `;
+            appDiv.innerHTML = html;
+            
+            document.querySelectorAll('.filter-cb').forEach(cb => {
+                cb.addEventListener('change', applyFilters);
+            });
+            applyFilters();
+        }
+
+        window.applyFilters = function() {
+            let data = [...window.currentResults];
+            
+            const checkedTypes = Array.from(document.querySelectorAll('input[data-key="airlineType"]:checked')).map(cb => cb.value);
+            const stopsOnlyDirect = document.querySelector('input[data-key="stops"]').checked;
+            const maxPrice = parseInt(document.getElementById('priceRange').value);
+            const sortVal = document.getElementById('sortSelect').value;
+
+            data = data.filter(f => {
+                if (checkedTypes.length > 0 && !checkedTypes.includes(f.airlineType)) return false;
+                if (stopsOnlyDirect && f.stops !== 0) return false;
+                if (f.price > maxPrice) return false;
+                return true;
+            });
+
+            if (sortVal === 'price_asc') data.sort((a, b) => a.price - b.price);
+            if (sortVal === 'score_desc') data.sort((a, b) => b.score - a.score);
+            if (sortVal === 'time_asc') data.sort((a, b) => a.fromTime.localeCompare(b.fromTime));
+
+            const rc = document.getElementById('resultCount');
+            if(rc) rc.innerText = data.length;
+            
+            const listContainer = document.getElementById('flightList');
+            if(!listContainer) return;
+
+            if (data.length === 0) {
+                listContainer.innerHTML = `<div class="card" style="text-align:center; padding: 50px;">未找到符合条件的航班，请放宽筛选条件。</div>`;
+                return;
+            }
+
+            listContainer.innerHTML = data.map(f => `
+                <div class="card flight-card" onclick="window.location.hash='/details/${f.id}'">
+                    <div style="flex: 2;">
+                        <div class="flex items-center gap-2" style="margin-bottom: 10px;">
+                            <span style="font-weight: bold;">${f.airline}</span>
+                            <span style="font-size: 12px; color: var(--text-muted);">${f.flightNo}</span>
+                            ${f.tags.map(t => `<span class="tag ${t.includes('无')?'tag-danger':'tag-info'}">${t}</span>`).join('')}
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="text-center">
+                                <div class="flight-time">${f.fromTime}</div>
+                                <div class="flight-airport">${f.fromAirport}</div>
+                            </div>
+                            <div class="flight-duration" style="flex: 1; max-width: 150px;">
+                                <span>${f.duration}</span>
+                                <div style="font-size: 12px; color: ${f.stops === 0 ? 'var(--success)' : 'var(--accent)'}; margin-top: 5px;">
+                                    ${f.stops === 0 ? '直飞' : '中转'}
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <div class="flight-time">${f.toTime}</div>
+                                <div class="flight-airport">${f.toAirport}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-col items-center action-area" style="flex: 1; border-left: 1px dashed var(--border); padding-left: 20px;">
+                        <span class="price" style="font-size: 28px;">${f.price}</span>
+                        <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 10px;">经济舱 1折</div>
+                        <button class="btn btn-primary" style="width: 100%;">查看详情</button>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        function renderDetails(id) {
+            const flight = mockFlights.find(f => f.id === id) || mockFlights[0];
+            const isLCC = flight.airlineType === '廉航';
+            const isSuperCheap = flight.price < 500;
+            
+            let riskLevel = '低风险 (灵活退改)', riskClass = 'risk-low', riskIcon = '✅';
+            if (isLCC) { riskLevel = '高风险 (严格限制)'; riskClass = 'risk-high'; riskIcon = '⚠️'; }
+            else if (isSuperCheap) { riskLevel = '中风险 (部分限制)'; riskClass = 'risk-medium'; riskIcon = '⚡'; }
+
+            const refundRates = isLCC ? ['40%', '70%', '100% (仅退税)', '100% (不可退)'] : ['免费', '10%', '20%', '50%'];
+            const changeRates = isLCC ? ['30%', '50%', '80%', '100% (不可改)'] : ['免费', '5%', '10%', '20%'];
+            const tClass = (rate) => rate.includes('100%') || rate.includes('80%') || rate.includes('70%') ? 'fee-high' : (rate === '免费' ? 'fee-low' : '');
+
+            const flexScore = isLCC ? 25 : (isSuperCheap ? 65 : 95);
+            const avgScore = 60;
+            
+            let html = `
+                <div class="container" style="margin-top: 20px;">
+                    <a href="#/results" style="color: var(--text-muted); display: inline-block; margin-bottom: 15px; font-weight: 500;">← 返回列表</a>
+                    
+                    <div class="flex gap-4" style="flex-wrap: wrap;">
+                        <div style="flex: 2; min-width: 300px;">
+                            <div class="card">
+                                <div class="flex justify-between items-center" style="border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 15px;">
+                                    <h2>${flight.fromCity} ➔ ${flight.toCity}</h2>
+                                    <span class="tag tag-success">可预订</span>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div style="text-align: right;">
+                                        <div class="flight-time" style="font-size: 24px;">${flight.fromTime}</div>
+                                        <div class="flight-airport">${flight.fromAirport}</div>
+                                    </div>
+                                    <div class="flight-duration" style="flex: 1; text-align:center;">
+                                        <span style="font-size:12px; background: white; padding: 2px 10px; border: 1px solid var(--border); border-radius: 10px;">
+                                            ${flight.airline} ${flight.flightNo} | 约 ${flight.duration}
+                                        </span>
+                                    </div>
+                                    <div style="text-align: left;">
+                                        <div class="flight-time" style="font-size: 24px;">${flight.toTime}</div>
+                                        <div class="flight-airport">${flight.toAirport}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" style="border-top: 4px solid ${isLCC ? '#ef4444' : 'var(--primary)'};">
+                                <div class="flex justify-between items-center" style="margin-bottom: 20px;">
+                                    <h3 style="display: flex; align-items: center; gap: 8px;">🤖 规则大白话解读</h3>
+                                    <span class="risk-badge ${riskClass}">${riskIcon} ${riskLevel}</span>
+                                </div>
+                                
+                                <div class="ai-rules" style="border: none; padding: 0; background: transparent; margin-top: 0;">
+                                    <div class="rule-section" style="background: #fff5f5; padding: 15px; border-radius: var(--radius); border: 1px dashed #fca5a5;">
+                                        <div class="rule-title"><span style="color: var(--danger);">🛑 核心避坑警告</span></div>
+                                        <ul style="padding-left: 20px; font-size: 13px; line-height: 1.8; color: #7f1d1d;">
+                                            ${isLCC ? 
+                                            `<li><span class="highlight-red">无免费托运行李！</span>仅包含1件7KG手提行李，且<span class="highlight-red">尺寸严格限制 (20×30×40cm)</span>。</li>
+                                             <li>如需携带拉杆箱，请务必<b>提前在官网购买行李额</b>，机场补交收费高昂。</li>
+                                             <li>不提供免费餐食饮水，且<b>严格禁止外带食物</b>在客舱食用。</li>` 
+                                            : 
+                                            `<li>此航班为特价舱位，<b>可能无法累积全额常旅客里程</b>。</li>
+                                             <li>起飞前72小时内退改极其昂贵，行程不确定者建议购买“退改无忧”险。</li>`
+                                            }
+                                        </ul>
+                                    </div>
+
+                                    <div class="rule-section" style="margin-top: 20px;">
+                                        <div class="rule-title"><span style="color: var(--success);">🎯 包含权益</span></div>
+                                        <ul style="padding-left: 20px; font-size: 13px; line-height: 1.8; color: var(--text-main);">
+                                            ${isLCC ? 
+                                            `<li>包含 <b>7KG 手提行李</b> (需完全塞入前方座椅下方)。</li>
+                                             <li>航班历史准点率极高，较少延误。</li>` 
+                                            : 
+                                            `<li>包含 <b>1件 20KG 免费托运行李额</b> 及 1件 8KG 手提行李。</li>
+                                             <li>航行途中提供免费正餐与基础饮料。</li>
+                                             <li>支持在线值机与提前普通选座。</li>`
+                                            }
+                                        </ul>
+                                    </div>
+
+                                    <div class="rule-section">
+                                        <div class="rule-title"><span style="color: var(--primary);">⏳ 阶梯退改手续费</span></div>
+                                        <table class="rule-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>操作时效</th>
+                                                    <th>起飞 7天前</th>
+                                                    <th>72h - 7天</th>
+                                                    <th>24h - 72h</th>
+                                                    <th>24h内</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td style="font-weight: 500;">退票费</td>
+                                                    <td class="${tClass(refundRates[0])}">${refundRates[0]}</td>
+                                                    <td class="${tClass(refundRates[1])}">${refundRates[1]}</td>
+                                                    <td class="${tClass(refundRates[2])}">${refundRates[2]}</td>
+                                                    <td class="${tClass(refundRates[3])}">${refundRates[3]}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="font-weight: 500;">同舱改期费</td>
+                                                    <td class="${tClass(changeRates[0])}">${changeRates[0]}</td>
+                                                    <td class="${tClass(changeRates[1])}">${changeRates[1]}</td>
+                                                    <td class="${tClass(changeRates[2])}">${changeRates[2]}</td>
+                                                    <td class="${tClass(changeRates[3])}">${changeRates[3]}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <div style="font-size: 12px; color: var(--text-muted); text-align: right;">* 费率基数为当前票面价</div>
+                                    </div>
+
+                                    <div class="rule-section">
+                                        <div class="rule-title"><span>📊 同航线规则宽松度对比</span></div>
+                                        <div class="comparison-box">
+                                            <div class="flex items-center" style="margin-bottom: 10px;">
+                                                <span style="font-size: 13px; width: 80px; text-align: right;">当前机票</span>
+                                                <div class="flex-bar">
+                                                    <div class="flex-fill" style="width: ${flexScore}%; background: ${flexScore < 40 ? 'var(--danger)' : (flexScore < 70 ? 'var(--accent)' : 'var(--success)')};"></div>
+                                                </div>
+                                                <span style="font-size: 12px; font-weight: bold; width: 40px;">${flexScore} 分</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <span style="font-size: 13px; width: 80px; text-align: right; color: var(--text-muted);">本线均值</span>
+                                                <div class="flex-bar" style="background: #f3f4f6;">
+                                                    <div class="flex-fill" style="width: ${avgScore}%; background: #9ca3af;"></div>
+                                                </div>
+                                                <span style="font-size: 12px; color: var(--text-muted); width: 40px;">${avgScore} 分</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3>📈 该航线近30天价格走势</h3>
+                                <p style="font-size: 12px; color: var(--text-muted);">AI 建议：当前价格处于历史<span class="highlight-green">低位</span>，建议入手</p>
+                                <canvas id="priceChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div style="flex: 1; min-width: 300px;">
+                            <div class="card" style="position: sticky; top: 80px;">
+                                <div style="text-align: center; margin-bottom: 20px;">
+                                    <span style="color: var(--text-muted);">最优总价</span>
+                                    <div class="price" style="font-size: 36px;">${flight.price}</div>
+                                    <span style="font-size: 12px; color: var(--success);">比日常均价低 35%</span>
+                                </div>
+                                
+                                <h4 style="margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">多渠道比价</h4>
+                                <div class="price-compare">
+                                    <span style="font-weight:bold;">航司官网</span>
+                                    <span class="price" style="font-size:16px;">${flight.price}</span>
+                                </div>
+                                <div class="price-compare">
+                                    <span>旅行OTA 1</span>
+                                    <span class="price" style="font-size:16px; color: var(--text-main);">${flight.price + 20}</span>
+                                </div>
+                                <div class="price-compare">
+                                    <span>旅行OTA 2</span>
+                                    <span class="price" style="font-size:16px; color: var(--text-main);">${flight.price + 35}</span>
+                                </div>
+
+                                <div class="flex-col gap-2" style="margin-top: 20px;">
+                                    <button class="btn btn-primary" onclick="showToast('正在演示：即将跳转实际购买渠道')">一键去官网购买</button>
+                                    <button class="btn btn-outline" onclick="window.location.hash='/alerts?from=${encodeURIComponent(flight.fromCity)}&to=${encodeURIComponent(flight.toCity)}'">🔔 订阅降价提醒</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            appDiv.innerHTML = html;
+            setTimeout(() => drawPriceChart(flight.price), 100);
+        }
+
+        function drawPriceChart(currentPrice) {
+            const canvas = document.getElementById('priceChart');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+
+            const w = rect.width, h = rect.height, padding = 30;
+            const days = 30, data = [];
+            let base = currentPrice + 300;
+            
+            for(let i=0; i<days; i++) {
+                if (i === days - 1) data.push(currentPrice);
+                else {
+                    base = base + (Math.random() * 100 - 50);
+                    data.push(Math.max(currentPrice, base)); 
+                }
+            }
+
+            const maxP = Math.max(...data) + 100, minP = Math.min(...data) - 50;
+
+            ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1; ctx.beginPath();
+            for(let i=0; i<5; i++) {
+                const y = padding + (h - padding*2) * (i/4);
+                ctx.moveTo(padding, y); ctx.lineTo(w - padding, y);
+            }
+            ctx.stroke();
+
+            ctx.beginPath(); ctx.strokeStyle = '#f97316'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
+            data.forEach((p, index) => {
+                const x = padding + ((w - padding*2) / (days-1)) * index;
+                const y = h - padding - ((p - minP) / (maxP - minP)) * (h - padding*2);
+                if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            const lastX = w - padding, lastY = h - padding - ((data[days-1] - minP) / (maxP - minP)) * (h - padding*2);
+            ctx.beginPath(); ctx.arc(lastX, lastY, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#f97316'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+            
+            ctx.fillStyle = '#1f2937'; ctx.font = '12px Arial';
+            ctx.fillText('历史价格', padding, padding - 10); ctx.fillText('今天', lastX - 15, h - 10);
+        }
+
+        function renderAlerts() {
+            const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+            const defFrom = urlParams.get('from') || '';
+            const defTo = urlParams.get('to') || '';
+
+            let html = `
+                <div class="container" style="max-width: 800px; margin-top: 30px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2>🔔 航班降价提醒订阅</h2>
+                        <p style="color: var(--text-muted); margin-top: 10px;">设置心理价位，一旦降价立刻发短信通知抢票</p>
+                    </div>
+
+                    <div class="card">
+                        <form id="alertForm" onsubmit="window.handleAlertSubmit(event)" class="flex-col gap-4">
+                            <div class="grid-3" style="gap: 15px;">
+                                <div class="form-group">
+                                    <label>出发城市 *</label>
+                                    <input type="text" id="a_from" required value="${defFrom}">
+                                </div>
+                                <div class="form-group">
+                                    <label>目的城市 *</label>
+                                    <input type="text" id="a_to" required value="${defTo}">
+                                </div>
+                                <div class="form-group">
+                                    <label>预期出行日期</label>
+                                    <input type="date" id="a_date" required>
+                                </div>
+                            </div>
+                            <div class="grid-3" style="gap: 15px;">
+                                <div class="form-group">
+                                    <label>时间灵活度</label>
+                                    <select id="a_flex">
+                                        <option value="固定日期">精确对应日期</option>
+                                        <option value="前后3天" selected>日期前后3天</option>
+                                        <option value="当月任意">当月任意时间</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>心理预期价位 (¥) *</label>
+                                    <input type="number" id="a_price" placeholder="如：500" required min="100">
+                                </div>
+                                <div class="form-group">
+                                    <label>接收手机号 *</label>
+                                    <input type="tel" id="a_phone" placeholder="用于接收短信" required pattern="^1[3-9]\\d{9}$">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">立刻开启监控</button>
+                        </form>
+                    </div>
+
+                    <div class="flex justify-between items-center" style="margin: 30px 0 15px;">
+                        <h3>我的订阅</h3>
+                        <div class="flex gap-2">
+                            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; border-color: var(--border); color: var(--text-muted);" onclick="window.backupData()">💾 备份</button>
+                            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; border-color: var(--border); color: var(--text-muted);" onclick="window.restoreData()">🔄 恢复</button>
+                        </div>
+                    </div>
+                    
+                    <div id="subsList" class="card" style="padding: 0;"></div>
+                </div>
+            `;
+            appDiv.innerHTML = html;
+            
+            // Set date slightly in future to prevent validation warnings
+            const futureDate = new Date();
+            futureDate.setDate(futureDate.getDate() + 3);
+            const aDateElem = document.getElementById('a_date');
+            if(aDateElem) aDateElem.value = futureDate.toISOString().split('T')[0];
+
+            renderSubsList();
+        }
+
+        window.openSubModal = () => document.getElementById('sub_modal').classList.add('show');
+        window.closeSubModal = () => document.getElementById('sub_modal').classList.remove('show');
+
+        window.backupData = () => {
+            const data = localStorage.getItem('flight_alerts');
+            if(data && data !== '[]') { safeStorageSet('flight_alerts_backup', JSON.parse(data)); showToast('✅ 订阅已备份'); } 
+            else { showToast('暂无数据可备份'); }
+        };
+
+        window.restoreData = () => {
+            const backup = localStorage.getItem('flight_alerts_backup');
+            if(backup) { localStorage.setItem('flight_alerts', backup); showToast('🔄 已恢复'); renderSubsList(); } 
+            else { showToast('未找到备份'); }
+        };
+
+        window.handleAlertSubmit = (e) => {
+            e.preventDefault();
+            const alertData = {
+                id: Date.now(),
+                from: document.getElementById('a_from').value,
+                to: document.getElementById('a_to').value,
+                date: document.getElementById('a_date').value,
+                flex: document.getElementById('a_flex').value,
+                price: document.getElementById('a_price').value,
+                status: '监控中'
+            };
+            const subs = safeStorageGet('flight_alerts', []);
+            subs.unshift(alertData);
+            safeStorageSet('flight_alerts', subs);
+            
+            window.openSubModal();
+            document.getElementById('alertForm').reset();
+            renderSubsList();
+        };
+
+        window.refreshPrice = (id) => {
+            let subs = safeStorageGet('flight_alerts', []);
+            let sub = subs.find(s => s.id === id);
+            if(!sub) return;
+            
+            showToast('正在为您抓取实时数据...');
+            setTimeout(() => {
+                const targetPrice = parseInt(sub.price);
+                const currentMarketPrice = targetPrice + Math.floor(Math.random() * 400) - 100;
+                if (currentMarketPrice <= targetPrice) {
+                    showToast(`🎉 惊喜！最低价降至 ¥${currentMarketPrice}`);
+                    sub.status = '已触发';
+                } else {
+                    showToast(`当前最低价为 ¥${currentMarketPrice}，继续蹲守！`);
+                }
+                safeStorageSet('flight_alerts', subs);
+                renderSubsList();
+            }, 800);
+        };
+
+        window.testTrigger = (id) => {
+            let subs = safeStorageGet('flight_alerts', []);
+            let sub = subs.find(s => s.id === id);
+            if(!sub) return;
+            
+            showToast(`[测试] 收到短信！航司放漏 ¥${parseInt(sub.price) - 50}`);
+            sub.status = '已触发';
+            safeStorageSet('flight_alerts', subs);
+            renderSubsList();
+        };
+
+        function renderSubsList() {
+            const listDiv = document.getElementById('subsList');
+            if(!listDiv) return;
+            const subs = safeStorageGet('flight_alerts', []);
+            
+            if (subs.length === 0) {
+                listDiv.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--text-muted);">暂无记录，去添加一个吧~</div>';
+                return;
+            }
+
+            listDiv.innerHTML = subs.map(s => {
+                let tagClass = 'tag-success', icon = '⏱️';
+                if (s.status === '已取消') { tagClass = 'tag-disabled'; icon = '🚫'; }
+                if (s.status === '已触发') { tagClass = 'tag-warning'; icon = '🔥'; }
+
+                return `
+                <div class="sub-list-item" style="${s.status === '已取消' ? 'opacity: 0.7;' : ''}">
+                    <div style="flex: 1;">
+                        <div class="flex items-center gap-2">
+                            <span style="font-weight: bold; font-size: 16px;">${s.from} ➔ ${s.to}</span>
+                            <span class="tag ${tagClass}">${icon} ${s.status}</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-muted); margin-top: 6px; display: flex; flex-wrap: wrap; gap: 10px;">
+                            <span>出行：${s.date || '--'}</span>
+                            <span style="background: var(--bg-color); padding: 0 4px; border-radius: 4px;">${s.flex || '不限'}</span>
+                            <span>目标: <b style="color: var(--accent);">¥${s.price}</b></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2" style="flex-wrap: wrap; justify-content: flex-end; width: 220px;">
+                        ${s.status === '监控中' ? `
+                            <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px; background: white;" onclick="window.refreshPrice(${s.id})">刷新低价</button>
+                            <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px; background: white; border-style: dashed;" onclick="window.testTrigger(${s.id})">测试</button>
+                            <button class="btn" style="padding: 5px 10px; font-size: 12px; background: #fee2e2; color: var(--danger);" onclick="window.toggleSubStatus(${s.id}, '已取消')">取消</button>
+                        ` : `
+                            <button class="btn" style="padding: 5px 10px; font-size: 12px; background: #e5e7eb; color: var(--text-muted);" onclick="window.deleteSub(${s.id})">删除</button>
+                            <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px; color: var(--primary);" onclick="window.toggleSubStatus(${s.id}, '监控中')">重新激活</button>
+                        `}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        window.toggleSubStatus = (id, newStatus) => {
+            let subs = safeStorageGet('flight_alerts', []);
+            let sub = subs.find(s => s.id === id);
+            if(sub) {
+                sub.status = newStatus;
+                safeStorageSet('flight_alerts', subs);
+                renderSubsList();
+                if(newStatus === '监控中') showToast('已激活降价监控');
+            }
+        };
+
+        window.deleteSub = (id) => {
+            if(confirm('删除后无法恢复，确认删除吗？')) {
+                let subs = safeStorageGet('flight_alerts', []);
+                safeStorageSet('flight_alerts', subs.filter(s => s.id !== id));
+                renderSubsList();
+            }
+        };
+
+        function renderHelp() {
+            appDiv.innerHTML = `
+                <div class="container" style="max-width: 800px; margin-top: 30px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2>常见问题与避坑指南</h2>
+                        <p style="color: var(--text-muted);">了解规则，聪明买票</p>
+                    </div>
+
+                    <details open>
+                        <summary>1. 平台核心功能怎么用？</summary>
+                        <div class="details-content">
+                            <b>检索与比价：</b>在首页输入起降地即可查询全网比价。<br><br>
+                            <b>降价订阅：</b>价格不满意时点击“订阅提醒”，设置底价，跌破时系统自动通知（演示功能）。
+                        </div>
+                    </details>
+                    <details>
+                        <summary>2. 廉价航空有哪些坑需要避开？</summary>
+                        <div class="details-content">
+                            <span style="color: var(--danger); font-weight: bold;">最大陷阱是行李额度！</span> 廉航特价票通常<b>不含免费托运</b>。携带大件行李务必提前网上购买行李额，机场现场购买收费昂贵。
+                        </div>
+                    </details>
+                    <details>
+                        <summary>3. 为什么看到的特价票点进去价格变了？</summary>
+                        <div class="details-content">
+                            特价舱位库存极少，通常只有几张，随时被他人买走。系统会自动跳转到下一个可用舱位，建议看到好价果断下手。
+                        </div>
+                    </details>
+                    <details>
+                        <summary>4. 什么时候买机票最便宜？</summary>
+                        <div class="details-content">
+                            - <b>国内航班：</b>提前2-3周最佳。<br>
+                            - <b>国际航班：</b>提前1-2个月最佳。<br>
+                            - <b>大促节点：</b>关注航司会员日（如每月特定日期），此时往往有大额立减。
+                        </div>
+                    </details>
+                </div>
+            `;
+        }
+
+    </script>
+</body>
+</html>
